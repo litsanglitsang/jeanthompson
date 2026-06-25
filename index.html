@@ -253,6 +253,574 @@
   // ── DATA ────────────────────────────────────────────────────────────────────
 
   const WORKS = [
+    { src: 'images/poppies.jpeg',           title: 'Poppies and Tree',     meta: 'Acrylic on canvas' },
+    { src: 'images/macaw.jpeg',             title: 'Macaw',                meta: 'Soft pastel' },
+    { src: 'images/bluebell-wood.jpeg',     title: 'Bluebell Wood',        meta: 'Acrylic on canvas' },
+    { src: 'images/robin.jpeg',             title: 'Robin',                meta: 'Soft pastel' },
+    { src: 'images/night-reflections.jpeg', title: 'Night Reflections',    meta: 'Acrylic on canvas' },
+    { src: 'images/red-fox.jpeg',           title: 'Red Fox',              meta: 'Soft pastel' },
+    { src: 'images/sea-pinks.jpeg',         title: 'Sea Pinks, Shoreline', meta: 'Oil on canvas' },
+    { src: 'images/pig.jpeg',               title: 'Pig in the Straw',     meta: 'Soft pastel' },
+    { src: 'images/night-watch.jpeg',       title: 'Night Watch',          meta: 'Soft pastel' },
+    { src: 'images/french-bulldog.jpeg',    title: 'French Bulldog',       meta: 'Soft pastel' },
+    { src: 'images/blossom-moon.jpeg',      title: 'Blossom Moon',         meta: 'Acrylic on canvas' },
+    { src: 'images/tawny.jpeg',             title: 'The Watcher',          meta: 'Soft pastel' },
+  ];
+
+  const HERO_SRCS = [
+    'images/poppies.jpeg',
+    'images/blossom-boat.jpeg',
+    'images/night-reflections.jpeg',
+    'images/bluebell-wood.jpeg',
+  ];
+
+  const EMAIL    = 'jeanthompson.artist@gmail.com';
+  const INSTAGRAM = 'https://www.instagram.com/jeanthompson.artist/';
+
+  const MENU_DEF = [
+    { label: 'Home',    page: 'home' },
+    { label: 'Gallery', page: 'gallery' },
+    { label: 'About',   page: 'about' },
+    { label: 'Contact', page: 'contact' },
+    { label: 'Shop',    page: 'shop',    soon: true },
+  ];
+
+  // ── STATE ───────────────────────────────────────────────────────────────────
+
+  let currentPage  = 'home';
+  let menuOpen     = false;
+  let lbIndex      = null;
+  let heroIndex    = 0;
+  let heroTimer    = null;
+  let chainBusy    = false;
+
+  // ── ELEMENTS ────────────────────────────────────────────────────────────────
+
+  const $ = (id) => document.getElementById(id);
+  const hamburger      = $('hamburger');
+  const siteName       = $('site-name');
+  const menuOverlay    = $('menu-overlay');
+  const menuBackdrop   = $('menu-backdrop');
+  const menuClose      = $('menu-close');
+  const menuItemsEl    = $('menu-items');
+  const headerScrim    = $('header-scrim');
+  const homeFooter     = $('home-footer');
+  const heroContainer  = $('hero-container');
+  const heroDotsEl     = $('hero-dots');
+  const viewGalleryBtn = $('view-gallery-btn');
+  const galleryGrid    = $('gallery-grid');
+  const lightbox       = $('lightbox');
+  const lbImg          = $('lb-img');
+  const lbTitleEl      = $('lb-title');
+  const lbMetaEl       = $('lb-meta');
+  const lbClose        = $('lb-close');
+  const lbPrev         = $('lb-prev');
+  const lbNext         = $('lb-next');
+  const lbEnquire      = $('lb-enquire');
+  const contactForm    = $('contact-form');
+  const formThanks     = $('form-thanks');
+  const sendBtn        = $('send-btn');
+  const writeAnother   = $('write-another');
+  const fName          = $('f-name');
+  const fEmail         = $('f-email');
+  const fMsg           = $('f-msg');
+
+  // ── HERO ────────────────────────────────────────────────────────────────────
+
+  function buildHero() {
+    heroContainer.innerHTML = '';
+    HERO_SRCS.forEach((src) => {
+      const div = document.createElement('div');
+      div.setAttribute('data-art', '');
+      div.setAttribute('data-hero-layer', '');
+      div.style.cssText = 'position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease;background-color:#E9E3D4;background-image:url(' + JSON.stringify(src) + ');background-size:cover;background-position:center';
+      heroContainer.appendChild(div);
+    });
+
+    heroDotsEl.innerHTML = '';
+    HERO_SRCS.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.setAttribute('data-hero-dot', '');
+      dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      dot.style.cssText = 'width:7px;height:7px;border-radius:50%;background:rgba(47,47,47,.25);border:none;padding:0;cursor:pointer;transition:background .4s ease;outline:none';
+      dot.addEventListener('click', () => { heroIndex = i; paintHero(); });
+      heroDotsEl.appendChild(dot);
+    });
+
+    paintHero();
+  }
+
+  function paintHero() {
+    const layers = heroContainer.querySelectorAll('[data-hero-layer]');
+    layers.forEach((l, n) => { l.style.opacity = n === heroIndex ? '1' : '0'; });
+    const dots = heroDotsEl.querySelectorAll('[data-hero-dot]');
+    dots.forEach((d, n) => { d.style.background = n === heroIndex ? '#6B8570' : 'rgba(47,47,47,.25)'; });
+  }
+
+  function startHeroTimer() {
+    clearInterval(heroTimer);
+    heroTimer = setInterval(() => {
+      heroIndex = (heroIndex + 1) % HERO_SRCS.length;
+      paintHero();
+    }, 3600);
+  }
+
+  // ── GALLERY ─────────────────────────────────────────────────────────────────
+
+  function buildGallery() {
+    galleryGrid.innerHTML = '';
+    WORKS.forEach((work, i) => {
+      const tile = document.createElement('div');
+      tile.className = 'gallery-tile';
+      tile.setAttribute('data-art', '');
+
+      const img = document.createElement('img');
+      img.alt = work.title;
+      img.setAttribute('data-art', '');
+      img.setAttribute('data-src', work.src);
+
+      tile.appendChild(img);
+      tile.addEventListener('click', () => openLightbox(i));
+      galleryGrid.appendChild(tile);
+    });
+
+    scheduleImgChain();
+  }
+
+  function scheduleImgChain() {
+    setTimeout(imgChain, 120);
+  }
+
+  function imgChain() {
+    if (chainBusy) return;
+    const pending = [...document.querySelectorAll('img[data-src]')].filter((el) => !el.dataset.loaded);
+    if (!pending.length) return;
+    chainBusy = true;
+    const img = pending[0];
+    const url = img.getAttribute('data-src');
+    const probe = new Image();
+    const done = () => {
+      img.src = url;
+      img.dataset.loaded = '1';
+      chainBusy = false;
+      setTimeout(imgChain, 20);
+    };
+    probe.onload = done;
+    probe.onerror = done;
+    probe.src = url;
+  }
+
+  // ── LIGHTBOX ─────────────────────────────────────────────────────────────────
+
+  function openLightbox(i) {
+    lbIndex = i;
+    renderLightbox();
+    lightbox.classList.add('open');
+    lightbox.style.animation = 'none';
+    lightbox.offsetHeight;
+    lightbox.style.animation = 'jtFadeIn .3s ease';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lbIndex = null;
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function stepLightbox(d) {
+    lbIndex = (lbIndex + d + WORKS.length) % WORKS.length;
+    renderLightbox();
+  }
+
+  function renderLightbox() {
+    if (lbIndex === null) return;
+    const w = WORKS[lbIndex];
+    lbImg.src = w.src;
+    lbImg.alt = w.title;
+    lbImg.style.animation = 'none';
+    lbImg.offsetHeight;
+    lbImg.style.animation = 'jtZoom .35s ease';
+    lbTitleEl.textContent = w.title;
+    lbMetaEl.textContent  = w.meta;
+  }
+
+  function enquireLightbox() {
+    if (lbIndex === null) return;
+    const title = WORKS[lbIndex].title;
+    const subject = encodeURIComponent('Print enquiry — ' + title);
+    const body    = encodeURIComponent('Hello Jean,\n\nI would like to enquire about a print of "' + title + '".\n\n');
+    window.location.href = 'mailto:' + EMAIL + '?subject=' + subject + '&body=' + body;
+  }
+
+  // ── MENU ────────────────────────────────────────────────────────────────────
+
+  function buildMenu() {
+    menuItemsEl.innerHTML = '';
+    MENU_DEF.forEach((m) => {
+      const a = document.createElement('button');
+      a.style.cssText = 'font-family:\'Cormorant Garamond\',serif;font-weight:500;font-size:clamp(26px,4vw,32px);color:' +
+        (m.soon ? 'rgba(47,47,47,.42)' : '#2F2F2F') +
+        ';text-decoration:none;width:max-content;cursor:pointer;display:flex;align-items:baseline;gap:10px;background:none;border:none;border-bottom:1px solid transparent;padding:0;outline:none;text-align:left';
+      a.setAttribute('data-page', m.page);
+
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = m.label;
+      a.appendChild(labelSpan);
+
+      if (m.soon) {
+        const badge = document.createElement('span');
+        badge.textContent = 'Coming soon';
+        badge.style.cssText = 'font-family:\'Hanken Grotesk\',sans-serif;font-weight:600;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#6B8570;border:1px solid #6B8570;border-radius:20px;padding:2px 8px;align-self:center';
+        a.appendChild(badge);
+      }
+
+      a.addEventListener('click', () => goPage(m.page));
+      menuItemsEl.appendChild(a);
+    });
+  }
+
+  function updateMenuActive() {
+    const items = menuItemsEl.querySelectorAll('[data-page]');
+    items.forEach((el) => {
+      const isActive = el.getAttribute('data-page') === currentPage;
+      el.style.borderBottom = isActive ? '1px solid #6B8570' : '1px solid transparent';
+    });
+  }
+
+  function openMenu() {
+    menuOpen = true;
+    menuOverlay.classList.add('open');
+    updateMenuActive();
+  }
+
+  function closeMenu() {
+    menuOpen = false;
+    menuOverlay.classList.remove('open');
+  }
+
+  // ── PAGE NAVIGATION ──────────────────────────────────────────────────────────
+
+  function goPage(page) {
+    if (lbIndex !== null) closeLightbox();
+    closeMenu();
+
+    const prev = $('page-' + currentPage);
+    if (prev) prev.classList.remove('active');
+
+    currentPage = page;
+    window.scrollTo(0, 0);
+
+    const next = $('page-' + page);
+    if (next) {
+      next.classList.add('active');
+      if (page !== 'home') {
+        next.style.animation = 'none';
+        next.offsetHeight;
+        next.style.animation = 'jtFade .5s ease';
+      }
+    }
+
+    const isHome = page === 'home';
+    headerScrim.classList.toggle('visible', !isHome);
+    homeFooter.classList.toggle('hidden', !isHome);
+
+    if (page === 'gallery') scheduleImgChain();
+  }
+
+  // ── CONTACT FORM ─────────────────────────────────────────────────────────────
+
+  function sendMessage() {
+    const name    = fName.value.trim();
+    const email   = fEmail.value.trim();
+    const message = fMsg.value.trim();
+    const subject = encodeURIComponent('Website enquiry' + (name ? ' from ' + name : ''));
+    const body    = encodeURIComponent((message || '') + '\n\n— ' + (name || '') + (email ? ' (' + email + ')' : ''));
+    window.location.href = 'mailto:' + EMAIL + '?subject=' + subject + '&body=' + body;
+    contactForm.style.display = 'none';
+    formThanks.style.display  = 'block';
+    formThanks.style.animation = 'none';
+    formThanks.offsetHeight;
+    formThanks.style.animation = 'jtZoom .4s ease';
+  }
+
+  function resetForm() {
+    fName.value  = '';
+    fEmail.value = '';
+    fMsg.value   = '';
+    formThanks.style.display  = 'none';
+    contactForm.style.display = 'flex';
+  }
+
+  // ── IMAGE PROTECTION ─────────────────────────────────────────────────────────
+
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('[data-art]')) e.preventDefault();
+  });
+  document.addEventListener('dragstart', (e) => {
+    if (e.target.closest('[data-art]')) e.preventDefault();
+  });
+
+  // ── KEYBOARD ─────────────────────────────────────────────────────────────────
+
+  document.addEventListener('keydown', (e) => {
+    if (lbIndex === null) return;
+    if (e.key === 'Escape')      closeLightbox();
+    else if (e.key === 'ArrowRight') stepLightbox(1);
+    else if (e.key === 'ArrowLeft')  stepLightbox(-1);
+  });
+
+  // ── EVENT LISTENERS ──────────────────────────────────────────────────────────
+
+  hamburger.addEventListener('click', openMenu);
+  siteName.addEventListener('click', () => goPage('home'));
+  menuClose.addEventListener('click', closeMenu);
+  menuBackdrop.addEventListener('click', closeMenu);
+
+  viewGalleryBtn.addEventListener('click', () => goPage('gallery'));
+
+  lbClose.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', () => stepLightbox(-1));
+  lbNext.addEventListener('click', () => stepLightbox(1));
+  lbEnquire.addEventListener('click', enquireLightbox);
+
+  sendBtn.addEventListener('click', sendMessage);
+  writeAnother.addEventListener('click', resetForm);
+
+  document.querySelectorAll('.go-contact').forEach((el) => {
+    el.addEventListener('click', (e) => { e.preventDefault(); goPage('contact'); });
+  });
+
+  // ── INIT ─────────────────────────────────────────────────────────────────────
+
+  buildHero();
+  buildGallery();
+  buildMenu();
+  startHeroTimer();
+
+}());
+</script>
+</body>
+</html>
+      overflow: hidden;
+      line-height: 0;
+      background: #E9E3D4;
+      transition: box-shadow .45s ease, transform .45s ease;
+    }
+    .gallery-tile:hover { box-shadow: 0 20px 44px -22px rgba(47,47,47,.55); transform: translateY(-3px); }
+    .gallery-tile img { width: 100%; height: auto; display: block; min-height: 140px; background: #E9E3D4; }
+
+    #send-btn:hover { background: #34507a !important; }
+    .lb-arrow:hover { color: #2F2F2F !important; }
+    button { cursor: pointer; }
+    a { cursor: pointer; }
+
+    #lightbox { display: none; }
+    #lightbox.open { display: flex; }
+
+    #menu-overlay { display: none; }
+    #menu-overlay.open { display: block; }
+
+    #home-footer { display: flex; }
+    #home-footer.hidden { display: none; }
+
+    #header-scrim { display: none; }
+    #header-scrim.visible { display: block; }
+  </style>
+</head>
+<body>
+<div id="root" style="font-family:'EB Garamond',Georgia,serif;color:#2F2F2F;background:#F5F2EA;min-height:100vh;position:relative;overflow-x:hidden">
+
+  <!-- HEADER SCRIM (inner pages) -->
+  <div id="header-scrim" style="position:fixed;top:0;left:0;right:0;height:clamp(96px,13vh,150px);z-index:30;pointer-events:none;background:linear-gradient(to bottom,#F5F2EA 24%,rgba(245,242,234,.86) 55%,rgba(245,242,234,0))"></div>
+
+  <!-- FIXED HEADER -->
+  <header style="position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:clamp(18px,2.4vw,30px) clamp(20px,4vw,52px)">
+    <button id="hamburger" aria-label="Open navigation menu" style="display:flex;flex-direction:column;gap:5px;width:26px;padding:6px 0;background:none;border:none;outline:none;flex-shrink:0">
+      <span style="height:1.5px;background:#2F2F2F;width:100%;display:block"></span>
+      <span style="height:1.5px;background:#2F2F2F;width:100%;display:block"></span>
+      <span style="height:1.5px;background:#2F2F2F;width:100%;display:block"></span>
+    </button>
+    <button id="site-name" aria-label="Go to home" style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(15px,1.85vw,21px);letter-spacing:.3em;text-transform:uppercase;color:#2F2F2F;white-space:nowrap;background:none;border:none;padding:0;outline:none">Jean Thompson</button>
+    <a href="https://www.instagram.com/jeanthompson.artist/" target="_blank" rel="noopener" style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#3F5F8A;text-decoration:none;white-space:nowrap">Instagram&nbsp;↗</a>
+  </header>
+
+  <!-- SLIDE-IN MENU -->
+  <div id="menu-overlay" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div id="menu-backdrop" style="position:fixed;inset:0;background:rgba(38,36,31,.4);animation:jtFadeIn .35s ease;z-index:60"></div>
+    <nav style="position:fixed;top:0;left:0;bottom:0;width:min(86vw,380px);background:#FAF8F2;box-shadow:24px 0 60px -20px rgba(47,47,47,.45);padding:clamp(28px,4vw,40px) clamp(28px,4vw,44px);display:flex;flex-direction:column;animation:jtSlide .4s cubic-bezier(.22,1,.36,1);z-index:61">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:15px;letter-spacing:.28em;text-transform:uppercase;color:#2F2F2F">Menu</div>
+        <button id="menu-close" aria-label="Close menu" style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:28px;color:#2F2F2F;line-height:1;background:none;border:none;padding:0;outline:none">×</button>
+      </div>
+      <div id="menu-items" style="margin-top:clamp(36px,6vw,54px);display:flex;flex-direction:column;gap:clamp(16px,2.6vw,22px)"></div>
+      <div style="margin-top:auto;padding-top:28px;border-top:1px solid rgba(47,47,47,.12)">
+        <a href="https://www.instagram.com/jeanthompson.artist/" target="_blank" rel="noopener" style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#3F5F8A;text-decoration:none">Instagram&nbsp;↗</a>
+        <a href="mailto:jeanthompson.artist@gmail.com" style="display:block;font-size:15px;color:rgba(47,47,47,.6);margin-top:12px;text-decoration:none">jeanthompson.artist@gmail.com</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ===== HOME PAGE ===== -->
+  <section id="page-home" class="page active" style="position:relative;width:100%;height:100vh;min-height:560px;overflow:hidden">
+    <div id="hero-container" style="position:absolute;inset:0"></div>
+    <!-- top gradient -->
+    <div style="position:absolute;top:0;left:0;right:0;height:180px;background:linear-gradient(to bottom,rgba(245,242,234,.85),rgba(245,242,234,0));pointer-events:none;z-index:2"></div>
+    <!-- bottom gradient -->
+    <div style="position:absolute;bottom:0;left:0;right:0;height:220px;background:linear-gradient(to top,rgba(245,242,234,.85),rgba(245,242,234,0));pointer-events:none;z-index:2"></div>
+    <!-- bio panel -->
+    <div style="position:absolute;left:clamp(20px,4vw,52px);bottom:clamp(70px,9vh,96px);z-index:3;max-width:min(86vw,440px);background:rgba(245,242,234,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(47,47,47,.08);box-shadow:0 16px 40px -28px rgba(47,47,47,.5);padding:clamp(22px,3vw,30px) clamp(24px,3vw,32px)">
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6B8570">Multi-medium artist</div>
+      <div style="font-family:'EB Garamond',serif;font-size:clamp(17px,2.2vw,21px);line-height:1.45;color:#2F2F2F;margin-top:12px;text-wrap:pretty">Landscapes, animals, and the natural world — painted from real places and real moments, with an eye shaped by photography.</div>
+      <button id="view-gallery-btn" style="display:inline-block;margin-top:20px;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#3F5F8A;border:none;border-bottom:1px solid #3F5F8A;padding:0 0 4px;background:none;outline:none">View the gallery&nbsp;→</button>
+    </div>
+    <!-- hero dots -->
+    <div id="hero-dots" style="position:absolute;bottom:clamp(28px,4vh,40px);left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:3"></div>
+  </section>
+
+  <!-- ===== GALLERY PAGE ===== -->
+  <section id="page-gallery" class="page" style="min-height:100vh;padding:clamp(96px,12vh,140px) clamp(20px,5vw,72px) 0">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:clamp(28px,4vw,42px);max-width:1280px;margin-left:auto;margin-right:auto">
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6B8570">Gallery</div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(47,47,47,.45)">Click to enlarge</div>
+    </div>
+    <div id="gallery-grid" style="max-width:1280px;margin:0 auto;column-width:300px;column-gap:22px"></div>
+    <div style="text-align:center;font-family:'EB Garamond',serif;font-style:italic;font-size:15px;color:rgba(47,47,47,.5);max-width:560px;margin:clamp(30px,5vw,48px) auto 0;text-wrap:pretty">Prints of these works are available by enquiry while the shop is in preparation. <a class="go-contact" href="#" style="color:#3F5F8A;text-decoration:none;border-bottom:1px solid #3F5F8A">Get in touch →</a></div>
+    <footer style="max-width:1280px;margin:clamp(60px,9vw,110px) auto 0;padding:clamp(28px,4vw,40px) 0;border-top:1px solid rgba(47,47,47,.14);display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;font-family:'Hanken Grotesk',sans-serif">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(18px,3vw,32px)">
+        <a href="https://www.instagram.com/jeanthompson.artist/" target="_blank" rel="noopener" style="font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#3F5F8A;text-decoration:none">Instagram ↗</a>
+        <a href="mailto:jeanthompson.artist@gmail.com" style="font-family:'EB Garamond',serif;font-size:15px;color:rgba(47,47,47,.6);text-decoration:none">jeanthompson.artist@gmail.com</a>
+      </div>
+      <div style="font-size:11px;letter-spacing:.04em;color:rgba(47,47,47,.45);text-wrap:pretty">© 2026 Jean Thompson. All artwork and images are the property of the artist and may not be reproduced or downloaded without permission.</div>
+    </footer>
+  </section>
+
+  <!-- ===== ABOUT PAGE ===== -->
+  <section id="page-about" class="page" style="min-height:100vh;padding:clamp(96px,12vh,150px) clamp(20px,5vw,72px) 0">
+    <div style="max-width:760px;margin:0 auto">
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6B8570;text-align:center">About</div>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(38px,6vw,58px);color:#2F2F2F;margin:12px 0 0;line-height:1.02;text-align:center">A lifetime looking</h1>
+      <div style="width:48px;height:1px;background:rgba(47,47,47,.3);margin:clamp(28px,4vw,40px) auto"></div>
+      <div style="font-family:'EB Garamond',serif;font-size:clamp(17px,2vw,19px);line-height:1.72;color:#2F2F2F;text-wrap:pretty">
+        <p style="margin:0 0 1.1em">Art has been a constant thread throughout my life — from a school subject that genuinely lit me up, to something I've pursued seriously across decades, exploring different mediums and techniques along the way.</p>
+        <p style="margin:0 0 1.1em">My work spans acrylic painting and soft pastels, with oils on the horizon — each medium brings something different, and I enjoy the variety. Subject-wise, landscapes are a particular passion, but I'm equally drawn to animals, birds, and the natural world more broadly. Much of my work is painted from photography — my own images, or photographs shared by friends and family. This connection to real places and real moments matters to me.</p>
+        <p style="margin:0 0 1.1em">A background in photography — including a City &amp; Guilds qualification, and years spent developing black and white prints in a darkroom — has shaped the way I see the world: light, composition, and atmosphere inform everything I put on canvas or paper.</p>
+        <p style="margin:0 0 1.1em">Having recently stepped back from work, I'm now dedicating real time to what I love most — developing new work, deepening my skills, and taking on commissions. I'm an active member of both Tadworth Art Group and Epsom and Ewell Art Group, which keeps me learning, challenged, and connected to a wider creative community.</p>
+        <p style="margin:0 0 1.1em">Wider travel and cultural experience — including seven years living in Hong Kong — has given me a particular appreciation for place, light, and the way surroundings carry meaning. That sense of paying attention to what's in front of you is what I try to bring to every piece.</p>
+        <p style="margin:0">I welcome commission enquiries and offer a selection of limited edition prints. If you'd like to discuss a project or a place that matters to you, I'd love to hear from you.</p>
+      </div>
+      <div style="text-align:center;margin-top:clamp(34px,5vw,48px)">
+        <button class="go-contact" style="display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#F5F2EA;background:#3F5F8A;padding:15px 34px;border:none;outline:none">Get in touch</button>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(24px,4vw,30px);color:#6B8570;text-align:center;margin-top:clamp(40px,6vw,56px)">Jean Thompson</div>
+    </div>
+    <footer style="max-width:1280px;margin:clamp(60px,9vw,110px) auto 0;padding:clamp(28px,4vw,40px) 0;border-top:1px solid rgba(47,47,47,.14);display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;font-family:'Hanken Grotesk',sans-serif">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(18px,3vw,32px)">
+        <a href="https://www.instagram.com/jeanthompson.artist/" target="_blank" rel="noopener" style="font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#3F5F8A;text-decoration:none">Instagram ↗</a>
+        <a href="mailto:jeanthompson.artist@gmail.com" style="font-family:'EB Garamond',serif;font-size:15px;color:rgba(47,47,47,.6);text-decoration:none">jeanthompson.artist@gmail.com</a>
+      </div>
+      <div style="font-size:11px;letter-spacing:.04em;color:rgba(47,47,47,.45);text-wrap:pretty">© 2026 Jean Thompson. All artwork and images are the property of the artist and may not be reproduced or downloaded without permission.</div>
+    </footer>
+  </section>
+
+  <!-- ===== CONTACT PAGE ===== -->
+  <section id="page-contact" class="page" style="min-height:100vh;padding:clamp(96px,12vh,140px) clamp(20px,5vw,72px) 0">
+    <div style="max-width:1080px;margin:0 auto;display:flex;flex-wrap:wrap;gap:clamp(36px,6vw,72px)">
+      <!-- Left: info -->
+      <div style="flex:1 1 320px;min-width:280px">
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6B8570">Contact</div>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(38px,5.5vw,54px);color:#2F2F2F;margin:10px 0 0;line-height:1.02">Get in touch</h1>
+        <p style="font-family:'EB Garamond',serif;font-size:clamp(16px,2vw,18px);line-height:1.65;color:#2F2F2F;max-width:380px;margin:22px 0 0;text-wrap:pretty">Prints are currently available by direct enquiry — a shop is coming soon. For commissions, or to purchase a limited edition print, send me a note and I'll reply personally. Limited editions are sent directly by me, signed and with a certificate of authenticity.</p>
+        <div style="margin-top:32px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(47,47,47,.45)">Email</div>
+          <a href="mailto:jeanthompson.artist@gmail.com" style="font-family:'EB Garamond',serif;font-size:clamp(18px,2.4vw,20px);color:#3F5F8A;text-decoration:none">jeanthompson.artist@gmail.com</a>
+        </div>
+        <div style="margin-top:24px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(47,47,47,.45)">Follow</div>
+          <a href="https://www.instagram.com/jeanthompson.artist/" target="_blank" rel="noopener" style="font-family:'EB Garamond',serif;font-size:clamp(18px,2.4vw,20px);color:#3F5F8A;text-decoration:none">@jeanthompson.artist&nbsp;↗</a>
+        </div>
+      </div>
+      <!-- Right: form -->
+      <div style="flex:1 1 380px;min-width:300px">
+        <div id="form-thanks" style="display:none;border:1px solid #6B8570;background:rgba(107,133,112,.06);padding:clamp(28px,4vw,40px)">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#2F2F2F">Thank you.</div>
+          <p style="font-family:'EB Garamond',serif;font-size:17px;line-height:1.6;color:#2F2F2F;margin:12px 0 0;text-wrap:pretty">Your message has opened in your email app, ready to send. I read every enquiry personally and will be in touch soon.</p>
+          <button id="write-another" style="display:inline-block;margin-top:20px;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#3F5F8A;background:none;border:none;border-bottom:1px solid #3F5F8A;padding:0 0 3px;outline:none">Write another →</button>
+        </div>
+        <div id="contact-form" style="display:flex;flex-direction:column;gap:22px">
+          <div>
+            <label for="f-name" style="display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(47,47,47,.5);margin-bottom:8px">Name</label>
+            <input id="f-name" type="text" placeholder="Your name" autocomplete="name" style="width:100%;border:none;border-bottom:1px solid rgba(47,47,47,.28);background:transparent;font-family:'EB Garamond',serif;font-size:18px;color:#2F2F2F;padding:7px 0;outline:none">
+          </div>
+          <div>
+            <label for="f-email" style="display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(47,47,47,.5);margin-bottom:8px">Email</label>
+            <input id="f-email" type="email" placeholder="you@email.com" autocomplete="email" style="width:100%;border:none;border-bottom:1px solid rgba(47,47,47,.28);background:transparent;font-family:'EB Garamond',serif;font-size:18px;color:#2F2F2F;padding:7px 0;outline:none">
+          </div>
+          <div>
+            <label for="f-msg" style="display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(47,47,47,.5);margin-bottom:8px">Message</label>
+            <textarea id="f-msg" placeholder="Tell me about the place, painting or commission you have in mind…" style="width:100%;height:130px;border:1px solid rgba(47,47,47,.22);background:transparent;font-family:'EB Garamond',serif;font-size:16px;line-height:1.5;color:#2F2F2F;padding:12px;outline:none;resize:vertical"></textarea>
+          </div>
+          <button id="send-btn" style="align-self:flex-start;background:#3F5F8A;color:#F5F2EA;border:none;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding:15px 36px;outline:none;transition:background .2s ease">Send message</button>
+        </div>
+      </div>
+    </div>
+    <footer style="max-width:1280px;margin:clamp(60px,9vw,110px) auto 0;padding:clamp(28px,4vw,40px) 0;border-top:1px solid rgba(47,47,47,.14);display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;font-family:'Hanken Grotesk',sans-serif">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(18px,3vw,32px)">
+        <a href="https://www.instagram.com/jeanthompson.artist/" target="_blank" rel="noopener" style="font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#3F5F8A;text-decoration:none">Instagram ↗</a>
+        <a href="mailto:jeanthompson.artist@gmail.com" style="font-family:'EB Garamond',serif;font-size:15px;color:rgba(47,47,47,.6);text-decoration:none">jeanthompson.artist@gmail.com</a>
+      </div>
+      <div style="font-size:11px;letter-spacing:.04em;color:rgba(47,47,47,.45);text-wrap:pretty">© 2026 Jean Thompson. All artwork and images are the property of the artist and may not be reproduced or downloaded without permission.</div>
+    </footer>
+  </section>
+
+  <!-- ===== SHOP PAGE ===== -->
+  <section id="page-shop" class="page" style="min-height:100vh;padding:clamp(96px,12vh,140px) clamp(20px,5vw,72px) 0;flex-direction:column">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;max-width:620px;margin:0 auto;padding:40px 0">
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#6B8570;border:1px solid #6B8570;border-radius:20px;padding:5px 14px;display:inline-block">Coming soon</div>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(40px,6.5vw,62px);color:#2F2F2F;margin:24px 0 0;line-height:1.02">The Print Shop</h1>
+      <p style="font-family:'EB Garamond',serif;font-size:clamp(17px,2.2vw,20px);line-height:1.65;color:#2F2F2F;margin:22px 0 0;text-wrap:pretty">An online shop for prints is in preparation. In the meantime, every print is available by direct enquiry. Limited editions are signed, numbered, accompanied by a certificate of authenticity, and sent to you directly by the artist.</p>
+      <button class="go-contact" style="display:inline-block;margin-top:34px;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#F5F2EA;background:#3F5F8A;padding:15px 36px;border:none;outline:none">Enquire about prints</button>
+    </div>
+    <footer style="max-width:1280px;margin:0 auto;width:100%;padding:clamp(28px,4vw,40px) 0;border-top:1px solid rgba(47,47,47,.14);display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;font-family:'Hanken Grotesk',sans-serif">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(18px,3vw,32px)">
+        <a href="https://www.instagram.com/jeanthompson.artist/" target="_blank" rel="noopener" style="font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#3F5F8A;text-decoration:none">Instagram ↗</a>
+        <a href="mailto:jeanthompson.artist@gmail.com" style="font-family:'EB Garamond',serif;font-size:15px;color:rgba(47,47,47,.6);text-decoration:none">jeanthompson.artist@gmail.com</a>
+      </div>
+      <div style="font-size:11px;letter-spacing:.04em;color:rgba(47,47,47,.45);text-wrap:pretty">© 2026 Jean Thompson. All artwork and images are the property of the artist and may not be reproduced or downloaded without permission.</div>
+    </footer>
+  </section>
+
+  <!-- HOME FOOTER (fixed over hero) -->
+  <div id="home-footer" style="position:fixed;bottom:clamp(16px,2.4vh,24px);left:clamp(20px,4vw,52px);right:clamp(20px,4vw,52px);z-index:5;justify-content:space-between;align-items:center;pointer-events:none">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(47,47,47,.5);pointer-events:auto">© 2026 Jean Thompson</div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" style="position:fixed;inset:0;z-index:80;background:rgba(245,242,234,.97);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);flex-direction:column">
+    <div style="display:flex;justify-content:flex-end;padding:clamp(18px,3vw,28px) clamp(20px,4vw,40px)">
+      <button id="lb-close" aria-label="Close" style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:34px;line-height:1;color:#2F2F2F;background:none;border:none;padding:0;outline:none">×</button>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:clamp(8px,2vw,28px);padding:0 clamp(12px,3vw,40px);min-height:0;overflow:hidden">
+      <button id="lb-prev" aria-label="Previous" class="lb-arrow" style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(34px,5vw,46px);color:rgba(47,47,47,.55);flex:none;user-select:none;background:none;border:none;padding:0;outline:none;transition:color .2s ease">&#8249;</button>
+      <img id="lb-img" data-art src="" alt="" style="max-width:min(1000px,90vw);max-height:68vh;width:auto;height:auto;object-fit:contain;box-shadow:0 40px 80px -36px rgba(47,47,47,.5);display:block">
+      <button id="lb-next" aria-label="Next" class="lb-arrow" style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(34px,5vw,46px);color:rgba(47,47,47,.55);flex:none;user-select:none;background:none;border:none;padding:0;outline:none;transition:color .2s ease">&#8250;</button>
+    </div>
+    <div style="text-align:center;padding:clamp(20px,3vw,30px) 20px clamp(28px,4vw,40px)">
+      <div id="lb-title" style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(22px,3vw,28px);color:#2F2F2F"></div>
+      <div id="lb-meta" style="font-family:'EB Garamond',serif;font-size:15px;color:rgba(47,47,47,.55);margin-top:4px"></div>
+      <button id="lb-enquire" style="display:inline-block;margin-top:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#3F5F8A;background:none;border:none;border-bottom:1px solid #3F5F8A;padding:0 0 3px;outline:none">Enquire about a print →</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── DATA ────────────────────────────────────────────────────────────────────
+
+  const WORKS = [
     { src: 'art/poppies.jpeg',           title: 'Poppies and Tree',     meta: 'Acrylic on canvas' },
     { src: 'art/macaw.jpeg',             title: 'Macaw',                meta: 'Soft pastel' },
     { src: 'art/bluebell-wood.jpeg',     title: 'Bluebell Wood',        meta: 'Acrylic on canvas' },
