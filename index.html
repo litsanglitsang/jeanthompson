@@ -726,6 +726,13 @@
   });
 
   // ---- ROUTING ----
+  const PAGES = ['gallery','about','contact','shop'];
+  function pathToPage(p) {
+    const seg = p.replace(/^\//, '').split(/[?#]/)[0];
+    return PAGES.includes(seg) ? seg : 'home';
+  }
+  function pageToPath(p) { return p === 'home' ? '/' : '/' + p; }
+
   function showPage(p) {
     document.getElementById('page-' + page).classList.remove('active');
     document.getElementById('page-' + p).classList.add('active');
@@ -737,14 +744,21 @@
 
   function goPage(p) {
     if (p === page) { closeMenu(); return; }
-    history.pushState({ page: p }, '');
+    history.pushState({ page: p }, '', pageToPath(p));
     showPage(p);
   }
 
-  history.replaceState({ page: 'home' }, '');
+  // Initialise from current URL path
+  const initPage = pathToPage(location.pathname);
+  if (initPage !== 'home') {
+    page = initPage;
+    document.getElementById('page-home').classList.remove('active');
+    document.getElementById('page-' + initPage).classList.add('active');
+  }
+  history.replaceState({ page: page }, '', pageToPath(page));
 
   window.addEventListener('popstate', e => {
-    const p = (e.state && e.state.page) ? e.state.page : 'home';
+    const p = (e.state && e.state.page) ? e.state.page : pathToPage(location.pathname);
     showPage(p);
   });
 
